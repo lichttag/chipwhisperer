@@ -58,12 +58,15 @@ setup.v = Setup File
 ../../../common/hdl/reg_chipwhisperer.v
 ../../../common/hdl/reconfig/reg_reconfig.v
 ../../../common/hdl/fifo_stream/fifo_top_stream.v
+../../../common/hdl/sad_trigger/reg_sad.v
+../../../common/hdl/sad_trigger/sad_auto_64.v
 
 [CoreGen Files]
 #Add XCO files. You can just list the filename, OR have the CoreGen files be
 #auto-generated as well by specifying the section name
 fifoonly_adcfifo.xco = ADC FIFO CoreGen Setup
 icap_fifo.xco = ICAP FIFO Setup
+fifo_sad_ref.xco = SAD FIFO Setup
 
 [ADC FIFO CoreGen Setup]
 InputFile = fifoonly_adcfifo.xco.in
@@ -77,6 +80,9 @@ data_count_width = 13
 
 [ICAP FIFO Setup]
 InputFile = icap_fifo.xco.in
+
+[SAD FIFO Setup]
+InputFile = fifo_sad_ref.xco.in
 
 [Setup File]
 CWLITE
