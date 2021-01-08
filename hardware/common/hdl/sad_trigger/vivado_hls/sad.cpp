@@ -3,6 +3,7 @@
 
 #define num_pts 128
 //#define num_pts 80
+//#define num_pts 72
 //#define num_pts 64
 
 void sad(ap_uint<7> max_points, ap_uint<10> ref_points_in[num_pts], ap_uint<10> * datain, ap_uint<20> * sumout)

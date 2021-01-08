@@ -59,7 +59,7 @@ setup.v = Setup File
 ../../../common/hdl/reconfig/reg_reconfig.v
 ../../../common/hdl/fifo_stream/fifo_top_stream.v
 ../../../common/hdl/sad_trigger/reg_sad.v
-../../../common/hdl/sad_trigger/sad_auto_64.v
+../../../common/hdl/sad_trigger/sad_auto_72.v
 
 [CoreGen Files]
 #Add XCO files. You can just list the filename, OR have the CoreGen files be
