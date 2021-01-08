@@ -42,7 +42,8 @@ CODE_WRITE  = 0xC0
 class ChipWhispererSAD(object):
     """Communicates with the SAD module inside the CW Pro
 
-    This submodule is only available on the ChipWhisperer1200 Pro
+    This submodule is available on the ChipWhisperer1200 Pro
+    and on the ChipWhisperer Lite with a reduced number of reference points
 
     Example::
 
@@ -108,6 +109,7 @@ class ChipWhispererSAD(object):
         The reference must be 128 samples long. Through this interface,
         it is represented as a numpy array of floats between -0.5 and 0.5
         (the same as trace data).
+        Note that for the ChipWhisperer Lite less samples are used during SAD computation.
 
         :Getter: Gets the currently set SAD reference
 

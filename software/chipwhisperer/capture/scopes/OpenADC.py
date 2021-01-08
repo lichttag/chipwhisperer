@@ -231,7 +231,7 @@ class OpenADC(ScopeTemplate, util.DisableNewAttr):
 
                 util.chipwhisperer_extra = self.advancedSettings
 
-                if cwtype == "cwrev2" or cwtype == "cw1200":
+                if cwtype == "cwrev2" or cwtype == "cw1200" or cwtype == "cwlite":
                     self.SAD = ChipWhispererSAD.ChipWhispererSAD(self.qtadc.sc)
 
                 if cwtype == "cw1200":
@@ -251,7 +251,8 @@ class OpenADC(ScopeTemplate, util.DisableNewAttr):
                 self.io = self.advancedSettings.cwEXTRA.gpiomux
                 self.trigger = self.advancedSettings.cwEXTRA.triggermux
                 self.glitch = self.advancedSettings.glitch.glitchSettings
-                if cwtype == "cw1200":
+                if cwtype == "cw1200" or cwtype == "cwlite":
+                    #for cwlite only SAD trigger is implemented
                     self.trigger = self.advancedSettings.cwEXTRA.protrigger
 
 
