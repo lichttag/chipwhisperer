@@ -27,7 +27,7 @@
 #=================================================
 import logging
 from usb import USBError
-from .cwhardware import ChipWhispererDecodeTrigger, ChipWhispererDigitalPattern, ChipWhispererExtra, ChipWhispererSAD
+from .cwhardware import ChipWhispererDecodeTrigger, ChipWhispererDigitalPattern, ChipWhispererExtra, ChipWhispererSAD, ChipWhispererEdgeCounter
 from . import _qt as openadc_qt
 from .base import ScopeTemplate
 from .openadc_interface.naeusbchip import OpenADCInterface_NAEUSBChip
@@ -231,8 +231,9 @@ class OpenADC(ScopeTemplate, util.DisableNewAttr):
 
                 util.chipwhisperer_extra = self.advancedSettings
 
-                if cwtype == "cwrev2" or cwtype == "cw1200":
+                if cwtype == "cwrev2" or cwtype == "cw1200" or cwtype == "cwlite":
                     self.SAD = ChipWhispererSAD.ChipWhispererSAD(self.qtadc.sc)
+                    self.EC = ChipWhispererEdgeCounter.ChipWhispererEdgeCounter(self.qtadc.sc)
 
                 if cwtype == "cw1200":
                     self.decode_IO = ChipWhispererDecodeTrigger.ChipWhispererDecodeTrigger(self.qtadc.sc)
