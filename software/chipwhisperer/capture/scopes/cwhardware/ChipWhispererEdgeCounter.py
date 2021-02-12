@@ -203,8 +203,8 @@ class ChipWhispererEdgeCounter(object):
 
         self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data, Validate=False)
 
-        if self.check_status() == False:
-            raise IOError("EdgeCounter edge_type set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
+        # if self.check_status() == False:
+        #     raise IOError("EdgeCounter edge_type set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
 
     def _get_settling_time(self):
         # ec_cfgaddr[8:15]: settling_time 
@@ -216,8 +216,8 @@ class ChipWhispererEdgeCounter(object):
     
         self.__set_config_val(settling_time, 1)
 
-        if self.check_status() == False:
-            raise IOError("EdgeCounter settling_time set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
+        # if self.check_status() == False:
+        #     raise IOError("EdgeCounter settling_time set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
 
     def _get_threshold(self):
         """ Get the threshold. When the trace level surpasses/falls below this threshold for long enough the system triggers (depending on the configured edge_type) """
@@ -248,8 +248,8 @@ class ChipWhispererEdgeCounter(object):
 
         self.__set_config_val(edge_num, 2)
 
-        if self.check_status() == False:
-            raise IOError("EdgeCounter edge_num set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
+        # if self.check_status() == False:
+        #     raise IOError("EdgeCounter edge_num set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
 
     def _get_pretrigger_ctr(self):
         # ec_cfgaddr[24:31]: pretrigger_ctr
@@ -261,6 +261,6 @@ class ChipWhispererEdgeCounter(object):
 
         self.__set_config_val(pretrigger_ctr, 3)
 
-        if self.check_status() == False:
-            raise IOError("EdgeCounter pretrigger_ctr set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
+        # if self.check_status() == False:
+        #     raise IOError("EdgeCounter pretrigger_ctr set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
 
