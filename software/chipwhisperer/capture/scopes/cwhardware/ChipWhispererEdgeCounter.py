@@ -271,6 +271,7 @@ class ChipWhispererEdgeCounter(object):
 
     def _set_threshold(self, threshold):
         """ Set the threshold. When the trace level surpasses/falls below this threshold for long enough the system triggers (depending on the configured edge_type) """
+        print("[!] EC config will now be deleted due to resetting the module in _set_threshold.")
         self.reset()
 
         # Transform python 32bit float into c 32 bit float
