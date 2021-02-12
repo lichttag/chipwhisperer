@@ -262,7 +262,7 @@ class OpenADC(ScopeTemplate, util.DisableNewAttr):
                 self.io = self.advancedSettings.cwEXTRA.gpiomux
                 self.trigger = self.advancedSettings.cwEXTRA.triggermux
                 self.glitch = self.advancedSettings.glitch.glitchSettings
-                if cwtype == "cw1200":
+                if cwtype == "cw1200" or cwtype == "cwlite":
                     self.trigger = self.advancedSettings.cwEXTRA.protrigger
 
 
@@ -397,6 +397,7 @@ class OpenADC(ScopeTemplate, util.DisableNewAttr):
         dict['glitch']  = self.glitch._dict_repr()
         if self._getCWType() == "cw1200":
             dict['SAD'] = self.SAD._dict_repr()
+            dict['EC'] = self.EC._dict_repr()
             dict['decode_IO'] = self.decode_IO._dict_repr()
 
         return dict

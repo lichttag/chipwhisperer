@@ -754,8 +754,10 @@ class ProTrigger(TriggerSettings):
             module = self.cwe.MODULE_SADPATTERN
         elif mode == "DECODEIO":
             module = self.cwe.MODULE_DECODEIO
+        elif mode == "EC":
+            module = self.cwe.MODULE_EDGECOUNTER
         else:
-            raise ValueError("Invalid mode {}. Must be 'basic', 'SAD', or 'DECODEIO'")
+            raise ValueError("Invalid mode {}. Must be 'basic', 'SAD', 'DECODEIO' or 'EC'")
 
         resp = self.cwe.oa.sendMessage(CODE_READ, ADDR_TRIGMOD,
                                        Validate=False, maxResp=1)
@@ -838,6 +840,7 @@ class CWExtraSettings(object):
     MODULE_ADVPATTERN = 0x01
     MODULE_SADPATTERN = 0x02
     MODULE_DECODEIO = 0x03
+    MODULE_EDGECOUNTER = 0x04
 
     CLOCK_FPA = 0x00
     CLOCK_FPB = 0x01
