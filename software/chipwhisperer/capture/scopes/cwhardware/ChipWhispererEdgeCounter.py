@@ -103,7 +103,7 @@ class ChipWhispererEdgeCounter(object):
     def absolute_values(self):
         self._get_absolute_values()
 
-    @edge_type.setter
+    @absolute_values.setter
     def absolute_values(self, value):
         self._set_absolute_values(value)
 
