@@ -101,7 +101,7 @@ class ChipWhispererEdgeCounter(object):
 
     @property
     def absolute_values(self):
-        self._get_absolute_values()
+        return self._get_absolute_values()
 
     @absolute_values.setter
     def absolute_values(self, value):
@@ -109,7 +109,7 @@ class ChipWhispererEdgeCounter(object):
 
     @property
     def edge_type(self):
-        self._get_edge_type()
+        return self._get_edge_type()
 
     @edge_type.setter
     def edge_type(self, value):
@@ -117,7 +117,7 @@ class ChipWhispererEdgeCounter(object):
 
     @property
     def settling_time(self):
-        self._get_settling_time()
+        return self._get_settling_time()
 
     @settling_time.setter
     def settling_time(self, value):
@@ -143,7 +143,7 @@ class ChipWhispererEdgeCounter(object):
 
     @property
     def pretrigger_ctr(self):
-        self._get_pretrigger_ctr()
+        return self._get_pretrigger_ctr()
 
     @pretrigger_ctr.setter
     def pretrigger_ctr(self, value):
