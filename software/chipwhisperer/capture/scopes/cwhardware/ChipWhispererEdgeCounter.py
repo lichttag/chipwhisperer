@@ -81,7 +81,10 @@ class ChipWhispererEdgeCounter(object):
         # Calling bytes() with an int produces 'int' number of 0x00 bytes.
         # Calling bytes() on an iterable (here: slide of len 1) produces a byte object including the iterables content.
         # Unpack always returns a tuple
-        return struct.unpack(fstr, bytes(data[idx:idx+1]))[0]
+        unpacked = struct.unpack(fstr, bytes(data[idx:idx+1]))[0]
+        
+        # most significant byte in the beginning of bytearray
+        return int.from_bytes(unpacked, "big", signed=False)
 
     # Serialization helper
     def _dict_repr(self):
