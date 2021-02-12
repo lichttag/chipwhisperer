@@ -149,14 +149,13 @@ module reg_edge(
 			if (sum_wr) begin
 				if (sum_out > threshold_reg) begin
 					if (edge_type == `EDGE_TYPE_RISING) begin
-						if (!is_high) begin
-							//Reset pretrigger if trace level went below threshold in last step
-							pretrigger_ctr <= 1;
-						end
-						else if (pretrigger_ctr < pretrigger_num) begin
+						if ((!is_high) || (pretrigger_ctr > 0)) begin
 							pretrigger_ctr <= pretrigger_ctr + 1;
 						end
-						else if (pretrigger_ctr == pretrigger_num) begin
+						else begin
+							pretrigger_ctr <= 0;
+						end
+						if (pretrigger_ctr == (pretrigger_num-1)) begin
 							edge_ctr <= edge_ctr + 1;
 							pretrigger_ctr <= 0;
 							if((edge_ctr+1) == edge_num) begin
@@ -164,18 +163,18 @@ module reg_edge(
 								edge_ctr <= 0;
 							end
 						end
-						is_high <= 1;
 					end //(edge_type == `EDGE_TYPE_RISING)
+					is_high <= 1;
+				end //if (sum_out > threshold)
 				else begin
 					if (edge_type == `EDGE_TYPE_FALLING) begin
-						if (is_high) begin
-							//Reset pretrigger if trace level went above threshold in last step
-							pretrigger_ctr <= pretrigger_num - 1;
-						end
-						else if (pretrigger_ctr < pretrigger_num) begin
+						if (is_high || (pretrigger_ctr > 0)) begin
 							pretrigger_ctr <= pretrigger_ctr + 1;
 						end
-						else if (pretrigger_ctr == pretrigger_num) begin
+						else begin
+							pretrigger_ctr <= 0;
+						end
+						if (pretrigger_ctr == (pretrigger_num-1)) begin
 							edge_ctr <= edge_ctr + 1;
 							pretrigger_ctr <= 0;
 							if((edge_ctr+1) == edge_num) begin
@@ -183,12 +182,11 @@ module reg_edge(
 								edge_ctr <= 0;
 							end
 						end
-						is_high <= 0;
 					end //(edge_type == `EDGE_TYPE_FALLING)
-				end //if (sum_out > threshold)
+					is_high <= 0;
+				end //else (sum_out > threshold)
 			end //if (sum_wr)
 		end //if (reset)
-	end 
 	end //always
 	 
  `ifdef CHIPSCOPE
