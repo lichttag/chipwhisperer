@@ -63,11 +63,13 @@ class ChipWhispererEdgeCounter(object):
         self.oa = oa
 
     # CW communication helper
-    def __set_config_val(self, new_data, idx, fstr):
+    # new_data will be truncated to 8 bit!
+    def __set_config_val(self, new_data, idx):
         # Fetch data from CW so we only update pretrigger_ctr
         data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
 
-        data[idx] = struct.pack(fstr, new_data)
+        # Truncate by only using lowest 8 bit
+        data[idx] = new_data & 0xff
 
         self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data, Validate=False)
     
@@ -197,7 +199,7 @@ class ChipWhispererEdgeCounter(object):
 
         # Put edge_type bit to bit 7 and fill bits below with '1' by ORing with EDGE_TYPE_MASK
         # Then pull bit 7 in data[0] to value of _edge_type
-        data[0] &= ((_edge_type << 7) | EDGE_TYPE_MASK)
+        data[0] &= ((_edge_type << 7) | self.EDGE_TYPE_MASK)
 
         self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data, Validate=False)
 
@@ -209,10 +211,10 @@ class ChipWhispererEdgeCounter(object):
         return self.__get_config_val(ec_cfgaddr, 1, "c")
 
     def _set_settling_time(self, settling_time):
-        if (threshold > 255) or (threshold < 0):
+        if (settling_time > 255) or (settling_time < 0):
             raise ValueError("Invalid settling_time {}. Must be in range (0, 255)".format(threshold))
     
-        self.__set_config_val(settling_time, 1, "c")
+        self.__set_config_val(settling_time, 1)
 
         if self.check_status() == False:
             raise IOError("EdgeCounter settling_time set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
@@ -244,7 +246,7 @@ class ChipWhispererEdgeCounter(object):
         if (edge_num > 255) or (edge_num < 0):
             raise ValueError("Invalid edge_num {}. Must be in range (0, 255)".format(threshold))
 
-        self.__set_config_val(edge_num, 2, "c")
+        self.__set_config_val(edge_num, 2)
 
         if self.check_status() == False:
             raise IOError("EdgeCounter edge_num set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
@@ -257,7 +259,7 @@ class ChipWhispererEdgeCounter(object):
         if (pretrigger_ctr > 255) or (pretrigger_ctr < 0):
             raise ValueError("Invalid pretrigger_ctr {}. Must be in range (0, 255)".format(threshold))
 
-        self.__set_config_val(pretrigger_ctr, 3, "c")
+        self.__set_config_val(pretrigger_ctr, 3)
 
         if self.check_status() == False:
             raise IOError("EdgeCounter pretrigger_ctr set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
