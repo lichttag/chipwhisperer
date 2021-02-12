@@ -37,6 +37,7 @@ from chipwhisperer.common.utils import util
 ec_cfgaddr[0]: reset
 ec_cfgaddr[1]: enable
 ec_cfgaddr[3]: running
+ec_cfgaddr[6]: absolute_values --> calculate absolute value before summing up
 ec_cfgaddr[7]: edge_type --> 0 == "rising_edge", 1 == "falling_edge"
 ec_cfgaddr[8:15]: settling_time 
 ec_cfgaddr[16:23]: edge_num
@@ -97,6 +98,14 @@ class ChipWhispererEdgeCounter(object):
 
     def __str__(self):
         return self.__repr__()
+
+    @property
+    def absolute_values(self):
+        self._get_absolute_values()
+
+    @edge_type.setter
+    def absolute_values(self, value):
+        self._set_absolute_values(value)
 
     @property
     def edge_type(self):
@@ -172,6 +181,39 @@ class ChipWhispererEdgeCounter(object):
             return False
         else:
             return True
+
+    def _get_absolute_values(self):
+        # ec_cfgaddr[6]: absolute_values --> calculate absolute value before summing up
+        data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
+
+        # isolate bit 6
+        data = (data[0] >> 6) & 0x01
+
+        if data == 0b0:
+            return False
+        if data == 0b1:
+            return True
+
+    def _set_absolute_values(self, absolute_values):
+        if not isinstance(absolute_values, bool):
+            raise ValueError(f"Value for absolute_values {edge_type} is not a boolean")
+    
+        # Fetch data from CW so we only update pretrigger_ctr
+        data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
+
+
+        if absolute_values:
+            # set bit 6 in byte 0
+            data[0] |= 1 << 6
+        else:
+            # clear bit 6 in byte 0
+            data[0] &= ~(1 << 6)
+            
+        print(f"EdgeCounter._set_absolute_values: calling sendMessage with data: {data}")
+        self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data, Validate=False)
+
+        # if self.check_status() == False:
+        #     raise IOError("EdgeCounter absolute_values set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
 
     def _get_edge_type(self):
         # ec_cfgaddr[7]: edge_type --> 0 == "rising_edge", 1 == "falling_edge"
