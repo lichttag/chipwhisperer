@@ -107,6 +107,8 @@ module reg_edge(
 	wire [31:0] sum_out;
 	wire sum_wr;
 	
+	wire absolute_value;
+	assign absolute_value = statuscfg_reg[6];
 	wire edge_type;
 	assign edge_type = statuscfg_reg[7];
 	wire [7:0] settling_time;
@@ -124,6 +126,7 @@ module reg_edge(
 	.ap_idle(),
 	.ap_ready(),
 	.window_width_V(settling_time), //7:0
+	.absolute_value_V(absolute_value),
 	.datain_V_dout(ADC_data), //9:0
 	.datain_V_empty_n(1'b1),
 	.datain_V_read(),
