@@ -63,7 +63,7 @@ class ChipWhispererEdgeCounter(object):
         self.oa = oa
 
     # CW communication helper
-    def _set_config_val(new_data, idx, fstr):
+    def __set_config_val(new_data, idx, fstr):
         # Fetch data from CW so we only update pretrigger_ctr
         data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
 
@@ -71,7 +71,7 @@ class ChipWhispererEdgeCounter(object):
 
         self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data, Validate=False)
     
-    def _get_config_val(addr, idx, fstr):
+    def __get_config_val(addr, idx, fstr):
         data = self.oa.sendMessage(CODE_READ, addr, maxResp=4)
 
         return struct.unpack(fstr, data[idx])
@@ -95,45 +95,45 @@ class ChipWhispererEdgeCounter(object):
 
     @property
     def edge_type(self):
-        self.get_edge_type()
+        self._get_edge_type()
 
     @edge_type.setter
     def edge_type(self, value):
-        self.set_edge_type(value)
+        self._set_edge_type(value)
 
     @property
     def settling_time(self):
-        self.get_settling_time()
+        self._get_settling_time()
 
     @settling_time.setter
     def settling_time(self, value):
-        self.set_settling_time(value)
+        self._set_settling_time(value)
 
     @property
     def threshold(self):
         """ The threshold for the EdgeCounter trigger.
         """
-        return self.get_threshold()
+        return self._get_threshold()
 
     @threshold.setter
     def threshold(self, value):
-        self.set_threshold(value)
+        self._set_threshold(value)
 
     @property
     def edge_num(self):
-        self.get_edge_num()
+        self._get_edge_num()
 
     @edge_num.setter
     def edge_num(self, value):
-        self.set_edge_num(value)
+        self._set_edge_num(value)
 
     @property
     def pretrigger_ctr(self):
-        self.get_pretrigger_ctr()
+        self._get_pretrigger_ctr()
 
     @pretrigger_ctr.setter
     def pretrigger_ctr(self, value):
-        self.set_pretrigger_ctr(value)
+        self._set_pretrigger_ctr(value)
 
     def reset(self):
         """ Reset the EdgeCounter hardware block. The ADC clock must be running! """
@@ -168,7 +168,7 @@ class ChipWhispererEdgeCounter(object):
         else:
             return True
 
-    def get_edge_type(self):
+    def _get_edge_type(self):
         # ec_cfgaddr[7]: edge_type --> 0 == "rising_edge", 1 == "falling_edge"
         data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
 
@@ -180,7 +180,7 @@ class ChipWhispererEdgeCounter(object):
         if data == 0b1:
             return "falling_edge"
 
-    def set_edge_type(self, edge_type):
+    def _set_edge_type(self, edge_type):
         if edge_type != "rising_edge" and edge_type != "falling_edge":
             raise ValueError(f"Invalid edge_type {edge_type}. Must be 'rising_edge' or 'falling_edge'")
     
@@ -201,26 +201,26 @@ class ChipWhispererEdgeCounter(object):
         if self.check_status() == False:
             raise IOError("EdgeCounter edge_type set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
 
-    def get_settling_time(self):
+    def _get_settling_time(self):
         # ec_cfgaddr[8:15]: settling_time 
-        return _get_config_val(ec_cfgaddr, 1, "c")
+        return __get_config_val(ec_cfgaddr, 1, "c")
 
-    def set_settling_time(self, settling_time):
+    def _set_settling_time(self, settling_time):
         if (threshold > 255) or (threshold < 0):
             raise ValueError("Invalid settling_time {}. Must be in range (0, 255)".format(threshold))
     
-        _set_config_val(settling_time, 1, "c")
+        __set_config_val(settling_time, 1, "c")
 
         if self.check_status() == False:
             raise IOError("EdgeCounter settling_time set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
 
-    def get_threshold(self):
+    def _get_threshold(self):
         """ Get the threshold. When the trace level surpasses/falls below this threshold for long enough the system triggers (depending on the configured edge_type) """
         data = self.oa.sendMessage(CODE_READ, ec_dataaddr, maxResp=4)
 
         return struct.unpack("f", data)
 
-    def set_threshold(self, threshold):
+    def _set_threshold(self, threshold):
         """ Set the threshold. When the trace level surpasses/falls below this threshold for long enough the system triggers (depending on the configured edge_type) """
         self.reset()
 
@@ -231,29 +231,29 @@ class ChipWhispererEdgeCounter(object):
         self.start()
 
 
-    def get_edge_num(self):
+    def _get_edge_num(self):
         # ec_cfgaddr[16:23]: edge_num
-        return _get_config_val(ec_cfgaddr, 2, "c")
+        return __get_config_val(ec_cfgaddr, 2, "c")
         
 
-    def set_edge_num(self, edge_num):
+    def _set_edge_num(self, edge_num):
         if (edge_num > 255) or (edge_num < 0):
             raise ValueError("Invalid edge_num {}. Must be in range (0, 255)".format(threshold))
 
-        _set_config_val(edge_num, 2, "c")
+        __set_config_val(edge_num, 2, "c")
 
         if self.check_status() == False:
             raise IOError("EdgeCounter edge_num set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
 
-    def get_pretrigger_ctr(self):
+    def _get_pretrigger_ctr(self):
         # ec_cfgaddr[24:31]: pretrigger_ctr
-        return _get_config_val(ec_cfgaddr, 3, "c")
+        return __get_config_val(ec_cfgaddr, 3, "c")
 
-    def set_pretrigger_ctr(self, pretrigger_ctr):
+    def _set_pretrigger_ctr(self, pretrigger_ctr):
         if (pretrigger_ctr > 255) or (pretrigger_ctr < 0):
             raise ValueError("Invalid pretrigger_ctr {}. Must be in range (0, 255)".format(threshold))
 
-        _set_config_val(pretrigger_ctr, 3, "c")
+        __set_config_val(pretrigger_ctr, 3, "c")
 
         if self.check_status() == False:
             raise IOError("EdgeCounter pretrigger_ctr set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
