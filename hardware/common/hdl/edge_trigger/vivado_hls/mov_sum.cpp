@@ -1,7 +1,7 @@
 
 #include "ap_int.h"
 
-#define max_window_width 128
+#define max_window_width 256
 
 void mov_sum(ap_uint<8> window_width, ap_uint<1> absolute_value, ap_uint<10> * datain, ap_uint<32> * sumout)
 {
@@ -11,7 +11,7 @@ void mov_sum(ap_uint<8> window_width, ap_uint<1> absolute_value, ap_uint<10> * d
 
 	ap_uint<10> datamem[max_window_width];
 	ap_uint<32> totalsum;
-	ap_uint<8> i;
+	ap_uint<9> i;
 	ap_uint<8> shift_cnt;
 	ap_uint<10> tmp;
 

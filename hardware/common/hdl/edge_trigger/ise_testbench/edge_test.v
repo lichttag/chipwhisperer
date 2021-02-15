@@ -32,7 +32,6 @@ module edge_test;
 	reg [0:0] absolute_value_V;
 	reg [9:0] datain_V_dout;
 	reg datain_V_empty_n;
-	reg sumout_V_full_n;
 	
 	reg signed [10:0] temp;
 
@@ -74,7 +73,6 @@ module edge_test;
 		absolute_value_V = 0;
 		datain_V_dout = 0;
 		datain_V_empty_n = 0;
-		sumout_V_full_n = 1;
 		
 		indata = $fopen("data.txt","r");		
 		count = $fscanf(indata, "%d\n", numdata);
