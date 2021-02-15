@@ -139,7 +139,7 @@ class ChipWhispererEdgeCounter(object):
 
     @property
     def edge_num(self):
-        self._get_edge_num()
+        return self._get_edge_num()
 
     @edge_num.setter
     def edge_num(self, value):
@@ -295,8 +295,8 @@ class ChipWhispererEdgeCounter(object):
 
         self.__set_config_val(edge_num, 2)
 
-        # if self.check_status() == False:
-        #     raise IOError("EdgeCounter edge_num set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
+        if self.check_status() == False:
+            raise IOError("EdgeCounter edge_num set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
 
     def _get_pretrigger_ctr(self):
         # ec_cfgaddr[24:31]: pretrigger_ctr
