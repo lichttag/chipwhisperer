@@ -139,7 +139,7 @@ class ChipWhispererEdgeCounter(object):
 
     @property
     def edge_num(self):
-        self._get_edge_num()
+        return self._get_edge_num()
 
     @edge_num.setter
     def edge_num(self, value):
