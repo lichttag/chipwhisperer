@@ -77,7 +77,7 @@ module reg_edge(
 	 assign start_core = statuscfg_reg[1];
 	 
 	 assign statuscfg_reg_read[2:0] = statuscfg_reg[2:0];
-	 assign statuscfg_reg_read[3] = sum_wr;
+	 assign statuscfg_reg_read[3] = sum_val;
 	 assign statuscfg_reg_read[31:4] = statuscfg_reg[31:4];
 	  	 
 	 always @(posedge clk) begin
@@ -105,7 +105,7 @@ module reg_edge(
 
 	 	 
 	wire [31:0] sum_out;
-	wire sum_wr;
+	wire sum_val;
 	
 	wire absolute_value;
 	assign absolute_value = statuscfg_reg[6];
@@ -130,9 +130,8 @@ module reg_edge(
 	.datain_V_dout(ADC_data), //9:0
 	.datain_V_empty_n(1'b1),
 	.datain_V_read(),
-	.sumout_V_din(sum_out), //19:0
-	.sumout_V_full_n(1'b1),
-	.sumout_V_write(sum_wr)
+	.sumout_V(sum_out), //31:0
+	.sumout_V_ap_vld(sum_val)
 	);
 
 	reg [7:0] edge_ctr = 0;
@@ -143,13 +142,12 @@ module reg_edge(
 		//Default assignment
 		trig_out <= 0;
 		
-		if ((!start_core) || rst_core) begin //might be unnecessary
+		if (rst_core | reset) begin //might be unnecessary
 			edge_ctr <= 0;
 			pretrigger_ctr <= 0;
 			is_high <= 0;
 		end else begin
-
-			if (sum_wr) begin
+			if (sum_val) begin
 				if (sum_out > threshold_reg) begin
 					if (edge_type == `EDGE_TYPE_RISING) begin
 						if ((!is_high) || (pretrigger_ctr > 0)) begin
@@ -188,7 +186,7 @@ module reg_edge(
 					end //(edge_type == `EDGE_TYPE_FALLING)
 					is_high <= 0;
 				end //else (sum_out > threshold)
-			end //if (sum_wr)
+			end //if (sum_val)
 		end //if (reset)
 	end //always
 	 
@@ -210,7 +208,7 @@ module reg_edge(
 	 assign cs_data[5] = 0;
 	 assign cs_data[18:9] = 0;	 
 	 assign cs_data[27:20] = reg_datai;
-	 assign cs_data[29] = sum_wr;
+	 assign cs_data[29] = sum_val;
 	 assign cs_data[49:30] = sum_out;	 	
 	 assign cs_data[59:50] = ADC_data;
  `endif
