@@ -111,12 +111,12 @@ module reg_edge(
 	assign absolute_value = statuscfg_reg[6];
 	wire edge_type;
 	assign edge_type = statuscfg_reg[7];
-	wire [7:0] settling_time;
-	assign settling_time = statuscfg_reg[15:8];
+	wire [7:0] window_size;
+	assign window_size = statuscfg_reg[15:8];
 	wire [7:0] edge_num;
 	assign edge_num = statuscfg_reg[23:16];
-	wire [7:0] pretrigger_num;
-	assign pretrigger_num = statuscfg_reg[31:24];
+	wire [7:0] hold_cycles_num;
+	assign hold_cycles_num = statuscfg_reg[31:24];
 
 	mov_sum mov_sum_inst (
 	.ap_clk(ADC_clk),
@@ -125,7 +125,7 @@ module reg_edge(
 	.ap_done(),
 	.ap_idle(),
 	.ap_ready(),
-	.window_width_V(settling_time), //7:0
+	.window_width_V(window_size), //7:0
 	.absolute_value_V(absolute_value),
 	.datain_V_dout(ADC_data), //9:0
 	.datain_V_empty_n(1'b1),
@@ -135,7 +135,7 @@ module reg_edge(
 	);
 
 	reg [7:0] edge_ctr = 0;
-	reg [7:0] pretrigger_ctr = 0;
+	reg [7:0] hold_cycles_ctr = 0;
 	reg is_high = 0;
 
 	always @(posedge ADC_clk) begin
@@ -144,21 +144,21 @@ module reg_edge(
 		
 		if (rst_core | reset) begin //might be unnecessary
 			edge_ctr <= 0;
-			pretrigger_ctr <= 0;
+			hold_cycles_ctr <= 0;
 			is_high <= 0;
 		end else begin
 			if (sum_val) begin
 				if (sum_out > threshold_reg) begin
 					if (edge_type == `EDGE_TYPE_RISING) begin
-						if ((!is_high) || (pretrigger_ctr > 0)) begin
-							pretrigger_ctr <= pretrigger_ctr + 1;
+						if ((!is_high) || (hold_cycles_ctr > 0)) begin
+							hold_cycles_ctr <= hold_cycles_ctr + 1;
 						end
 						else begin
-							pretrigger_ctr <= 0;
+							hold_cycles_ctr <= 0;
 						end
-						if (pretrigger_ctr == (pretrigger_num-1)) begin
+						if (hold_cycles_ctr == (hold_cycles_num-1)) begin
 							edge_ctr <= edge_ctr + 1;
-							pretrigger_ctr <= 0;
+							hold_cycles_ctr <= 0;
 							if((edge_ctr+1) == edge_num) begin
 								trig_out <= 1;
 								edge_ctr <= 0;
@@ -169,15 +169,15 @@ module reg_edge(
 				end //if (sum_out > threshold)
 				else begin
 					if (edge_type == `EDGE_TYPE_FALLING) begin
-						if (is_high || (pretrigger_ctr > 0)) begin
-							pretrigger_ctr <= pretrigger_ctr + 1;
+						if (is_high || (hold_cycles_ctr > 0)) begin
+							hold_cycles_ctr <= hold_cycles_ctr + 1;
 						end
 						else begin
-							pretrigger_ctr <= 0;
+							hold_cycles_ctr <= 0;
 						end
-						if (pretrigger_ctr == (pretrigger_num-1)) begin
+						if (hold_cycles_ctr == (hold_cycles_num-1)) begin
 							edge_ctr <= edge_ctr + 1;
-							pretrigger_ctr <= 0;
+							hold_cycles_ctr <= 0;
 							if((edge_ctr+1) == edge_num) begin
 								trig_out <= 1;
 								edge_ctr <= 0;

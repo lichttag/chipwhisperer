@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2014, NewAE Technology Inc
+# Copyright (c) 2021 NewAE Technology Inc
 # All rights reserved.
 #
 # Authors: Otto Bittner, Thilo Krachenfels
@@ -39,9 +39,9 @@ ec_cfgaddr[1]: enable
 ec_cfgaddr[3]: running
 ec_cfgaddr[6]: absolute_values --> calculate absolute value before summing up
 ec_cfgaddr[7]: edge_type --> 0 == "rising_edge", 1 == "falling_edge"
-ec_cfgaddr[8:15]: settling_time 
+ec_cfgaddr[8:15]: window_size 
 ec_cfgaddr[16:23]: edge_num
-ec_cfgaddr[24:31]: pretrigger_ctr
+ec_cfgaddr[24:31]: hold_cycles
 ec_dataaddr[0:31]: threshold
 """
 ec_cfgaddr  = 60
@@ -51,7 +51,7 @@ CODE_WRITE  = 0xC0
 
 
 class ChipWhispererEdgeCounter(object):
-    """Communicates with the EdgeCounter module inside the CW Pro
+    """Communicates with the EdgeCounter module inside the CW Pro/Lite
 
     """
     _name = 'EdgeCounter Trigger Module'
@@ -90,10 +90,10 @@ class ChipWhispererEdgeCounter(object):
     def _dict_repr(self):
         dict = OrderedDict()
         dict['edge_type'] = self.edge_type
-        dict['settling_time'] = self.settling_time
+        dict['window_size'] = self.window_size
         dict['threshold'] = self.threshold
         dict['edge_num'] = self.edge_num
-        dict['pretrigger_ctr'] = self.pretrigger_ctr
+        dict['hold_cycles'] = self.hold_cycles
         return dict
 
     # Serialization helper
@@ -120,17 +120,16 @@ class ChipWhispererEdgeCounter(object):
         self._set_edge_type(value)
 
     @property
-    def settling_time(self):
-        return self._get_settling_time()
+    def window_size(self):
+        return self._get_window_size()
 
-    @settling_time.setter
-    def settling_time(self, value):
-        self._set_settling_time(value)
+    @window_size.setter
+    def window_size(self, value):
+        self._set_window_size(value)
 
     @property
     def threshold(self):
-        """ The threshold for the EdgeCounter trigger.
-        """
+        """ The threshold for the EdgeCounter trigger."""
         return self._get_threshold()
 
     @threshold.setter
@@ -146,12 +145,12 @@ class ChipWhispererEdgeCounter(object):
         self._set_edge_num(value)
 
     @property
-    def pretrigger_ctr(self):
-        return self._get_pretrigger_ctr()
+    def hold_cycles(self):
+        return self._get_hold_cycles()
 
-    @pretrigger_ctr.setter
-    def pretrigger_ctr(self, value):
-        self._set_pretrigger_ctr(value)
+    @hold_cycles.setter
+    def hold_cycles(self, value):
+        self._set_hold_cycles(value)
 
     def reset(self):
         """ Reset the EdgeCounter hardware block. The ADC clock must be running! """
@@ -159,10 +158,10 @@ class ChipWhispererEdgeCounter(object):
         data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
         data[0] = 0x01
         self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data)
-
+        
         if self.check_status():
             raise IOError("EdgeCounter Reset in progress, but EdgeCounter reports still running. Is ADC Clock stopped?")
-
+        
         data[0] = 0x00
         self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data)
 
@@ -170,7 +169,6 @@ class ChipWhispererEdgeCounter(object):
         """ Start the EdgeCounter algorithm, which causes the threshold to be loaded from the FIFO """
         
         data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
-        # data is a bytearray
         # Set enable        
         data[0] = 0x02
         self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data, Validate=False)
@@ -179,7 +177,6 @@ class ChipWhispererEdgeCounter(object):
 
     def check_status(self):
         """ Check if the EdgeCounter module is running & outputting valid data """
-
         data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
         if not (data[0] & self.STATUS_RUNNING_MASK):
             return False
@@ -187,51 +184,51 @@ class ChipWhispererEdgeCounter(object):
             return True
 
     def _get_absolute_values(self):
+        """ Get if the absolute value of the signal should be calculated before averaging/summing"""
         # ec_cfgaddr[6]: absolute_values --> calculate absolute value before summing up
         data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
-
+        
         # isolate bit 6
         data = (data[0] >> 6) & 0x01
-
+        
         if data == 0b0:
             return False
         if data == 0b1:
             return True
 
     def _set_absolute_values(self, absolute_values):
+        """ Set if the absolute value of the signal should be calculated before averaging/summing"""
         if not isinstance(absolute_values, bool):
             raise ValueError(f"Value for absolute_values {edge_type} is not a boolean")
-    
+        
         # Fetch data from CW so we only update pretrigger_ctr
         data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
-
-
+        
         if absolute_values:
             # set bit 6 in byte 0
             data[0] |= 1 << 6
         else:
             # clear bit 6 in byte 0
             data[0] &= ~(1 << 6)
-            
-        print(f"EdgeCounter._set_absolute_values: calling sendMessage with data: {data}")
+        
         self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data, Validate=False)
 
-        # if self.check_status() == False:
-        #     raise IOError("EdgeCounter absolute_values set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
 
     def _get_edge_type(self):
+        """ Get the edge type"""
         # ec_cfgaddr[7]: edge_type --> 0 == "rising_edge", 1 == "falling_edge"
         data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
-
+        
         # isolate bit 7
         data = (data[0] >> 7) & 0x01
-
+        
         if data == 0b0:
             return "rising_edge"
         if data == 0b1:
             return "falling_edge"
 
     def _set_edge_type(self, edge_type):
+        """ Set the edge type"""
         if edge_type != "rising_edge" and edge_type != "falling_edge":
             raise ValueError(f"Invalid edge_type {edge_type}. Must be 'rising_edge' or 'falling_edge'")
     
@@ -245,69 +242,68 @@ class ChipWhispererEdgeCounter(object):
         if edge_type == "falling_edge":
             # set bit 7 in byte 0
             data[0] |= 1 << 7
-
-
+        
         self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data, Validate=False)
 
-        # if self.check_status() == False:
-        #     raise IOError("EdgeCounter edge_type set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
 
-    def _get_settling_time(self):
-        # ec_cfgaddr[8:15]: settling_time 
+    def _get_window_size(self):
+        """ Get the moving average/sum width in ADC cycles"""
+        # ec_cfgaddr[8:15]: window_size 
         return self.__get_config_val(ec_cfgaddr, 1, "c")
 
-    def _set_settling_time(self, settling_time):
-        if (settling_time > 255) or (settling_time < 0):
-            raise ValueError("Invalid settling_time {}. Must be in range (0, 255)".format(threshold))
-    
-        self.__set_config_val(settling_time, 1)
+    def _set_window_size(self, window_size):
+        """ Set the moving average/sum width in ADC cycles"""
+        if (window_size > 255) or (window_size < 1):
+            raise ValueError("Invalid settling_time {}. Must be in range (1, 255)".format(window_size))
+        
+        self.__set_config_val(window_size, 1)
 
-        # if self.check_status() == False:
-        #     raise IOError("EdgeCounter settling_time set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
 
     def _get_threshold(self):
         """ Get the threshold. When the trace level surpasses/falls below this threshold for long enough the system triggers (depending on the configured edge_type) """
         data = self.oa.sendMessage(CODE_READ, ec_dataaddr, maxResp=4)
+        
+        thr_raw = struct.unpack('<I', data)[0]
+        thr_unpacked = ((thr_raw * self.window_size) // 1024) - 0.5
+        return thr_unpacked
 
-        # unpack always returns a tuple
-        return struct.unpack("f", data)[0]
 
     def _set_threshold(self, threshold):
         """ Set the threshold. When the trace level surpasses/falls below this threshold for long enough the system triggers (depending on the configured edge_type) """
-        print("[!] EC config will now be deleted due to resetting the module in _set_threshold.")
-        self.reset()
-
-        # Transform python 32bit float into c 32 bit float
-        threshold_packed = struct.pack("f", threshold)
-
+        print("[!] Make sure to set window_size before threshold")
+        
+        if self.window_size < 1:
+            raise IOError("EdgeCounter window_size must be set before threshold can be set")
+        
+        threshold_s = int(((threshold + 0.5) * 1024) * self.window_size)
+        threshold_packed = struct.pack("<I", threshold_s)
+        
         self.oa.sendMessage(CODE_WRITE, ec_dataaddr, threshold_packed, Validate=False)
         self.start()
 
 
     def _get_edge_num(self):
+        """ Get the number of edges which should be detected before triggering"""
         # ec_cfgaddr[16:23]: edge_num
         return self.__get_config_val(ec_cfgaddr, 2, "c")
-        
 
     def _set_edge_num(self, edge_num):
-        if (edge_num > 255) or (edge_num < 0):
-            raise ValueError("Invalid edge_num {}. Must be in range (0, 255)".format(threshold))
-
+        """ Set the number of edges which should be detected before triggering"""
+        if (edge_num > 255) or (edge_num < 1):
+            raise ValueError("Invalid edge_num {}. Must be in range (1, 255)".format(edge_num))
+        
         self.__set_config_val(edge_num, 2)
 
-        if self.check_status() == False:
-            raise IOError("EdgeCounter edge_num set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
 
-    def _get_pretrigger_ctr(self):
-        # ec_cfgaddr[24:31]: pretrigger_ctr
+    def _get_hold_cycles(self):
+        """ Get the number of cycles the moving average/sum should stay above/below threshold before detecting an edge"""
+        # ec_cfgaddr[24:31]: hold_cycles
         return self.__get_config_val(ec_cfgaddr, 3, "c")
 
-    def _set_pretrigger_ctr(self, pretrigger_ctr):
-        if (pretrigger_ctr > 255) or (pretrigger_ctr < 0):
-            raise ValueError("Invalid pretrigger_ctr {}. Must be in range (0, 255)".format(threshold))
-
-        self.__set_config_val(pretrigger_ctr, 3)
-
-        # if self.check_status() == False:
-        #     raise IOError("EdgeCounter pretrigger_ctr set, but EdgeCounter not running. No valid trigger will be present. Did you set a threshold?")
+    def _set_hold_cycles(self, hold_cycles):
+        """ Set the number of cycles the moving average/sum should stay above/below threshold before detecting an edge"""
+        if (hold_cycles > 255) or (hold_cycles < 1):
+            raise ValueError("Invalid hold_cycles value {}. Must be in range (1, 255)".format(hold_cycles))
+        
+        self.__set_config_val(hold_cycles, 3)
 
