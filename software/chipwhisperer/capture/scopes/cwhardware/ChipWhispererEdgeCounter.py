@@ -171,7 +171,7 @@ class ChipWhispererEdgeCounter(object):
         
         data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
         # data is a bytearray
-        # Set reset & enable        
+        # Set enable        
         data[0] = 0x02
         self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data, Validate=False)
         data[0] = 0x00
