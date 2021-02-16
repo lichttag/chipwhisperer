@@ -264,7 +264,7 @@ class ChipWhispererEdgeCounter(object):
         data = self.oa.sendMessage(CODE_READ, ec_dataaddr, maxResp=4)
         
         thr_raw = struct.unpack('<I', data)[0]
-        thr_unpacked = ((thr_raw * self.window_size) // 1023) - 0.5
+        thr_unpacked = (thr_raw / (self.window_size * 1023)) - 0.5
         return thr_unpacked
 
 
