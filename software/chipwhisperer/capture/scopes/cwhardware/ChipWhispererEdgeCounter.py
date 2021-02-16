@@ -279,7 +279,6 @@ class ChipWhispererEdgeCounter(object):
         threshold_packed = struct.pack("<I", threshold_s)
         
         self.oa.sendMessage(CODE_WRITE, ec_dataaddr, threshold_packed, Validate=False)
-        self.start()
 
 
     def _get_edge_num(self):
