@@ -55,10 +55,18 @@ class ChipWhispererEdgeCounter(object):
 
     """
     _name = 'EdgeCounter Trigger Module'
-    STATUS_RUNNING_MASK = 1 << 3
-    STATUS_RESET_MASK = 1 << 0
-    STATUS_START_MASK = 1 << 1
-    EDGE_TYPE_MASK = 0b01111111
+    
+    CFG_BIT_RESET = 0
+    CFG_BIT_START = 1
+    CFG_BIT_RUNNING = 3
+    CFG_BIT_ABSOLUTE_VALUES = 6
+    CFG_BIT_EDGE_TYPE = 7
+    
+    STATUS_RESET_MASK = 1 << CFG_BIT_RESET
+    STATUS_START_MASK = 1 << CFG_BIT_START
+    STATUS_RUNNING_MASK = 1 << CFG_BIT_RUNNING
+    STATUS_ABSOLUTE_VALUES_MASK = 1 << CFG_BIT_ABSOLUTE_VALUES
+    STATUS_EDGE_TYPE_MASK = 1 << CFG_BIT_EDGE_TYPE
 
     def __init__(self, oa):
         self.oa = oa
@@ -94,6 +102,7 @@ class ChipWhispererEdgeCounter(object):
         dict['threshold'] = self.threshold
         dict['edge_num'] = self.edge_num
         dict['hold_cycles'] = self.hold_cycles
+        dict['absolute_values'] = self.absolute_values
         return dict
 
     # Serialization helper
@@ -169,10 +178,12 @@ class ChipWhispererEdgeCounter(object):
         """ Start the EdgeCounter algorithm, which causes the threshold to be loaded from the FIFO """
         
         data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
-        # Set enable        
-        data[0] = 0x02
+        data_cpy = data
+        
+        # Set enable
+        data[0] |= self.STATUS_START_MASK
         self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data, Validate=False)
-        data[0] = 0x00
+        data = data_cpy
         self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data, Validate=False)
 
     def check_status(self):
@@ -188,12 +199,9 @@ class ChipWhispererEdgeCounter(object):
         # ec_cfgaddr[6]: absolute_values --> calculate absolute value before summing up
         data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
         
-        # isolate bit 6
-        data = (data[0] >> 6) & 0x01
-        
-        if data == 0b0:
+        if data[0] & self.STATUS_ABSOLUTE_VALUES_MASK == 0b0:
             return False
-        if data == 0b1:
+        else:
             return True
 
     def _set_absolute_values(self, absolute_values):
@@ -205,11 +213,11 @@ class ChipWhispererEdgeCounter(object):
         data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
         
         if absolute_values:
-            # set bit 6 in byte 0
-            data[0] |= 1 << 6
+            # set bit
+            data[0] |= 1 << self.CFG_BIT_ABSOLUTE_VALUES
         else:
-            # clear bit 6 in byte 0
-            data[0] &= ~(1 << 6)
+            # clear bit
+            data[0] &= ~(1 << self.CFG_BIT_ABSOLUTE_VALUES)
         
         self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data, Validate=False)
 
@@ -219,12 +227,9 @@ class ChipWhispererEdgeCounter(object):
         # ec_cfgaddr[7]: edge_type --> 0 == "rising_edge", 1 == "falling_edge"
         data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
         
-        # isolate bit 7
-        data = (data[0] >> 7) & 0x01
-        
-        if data == 0b0:
+        if (data[0] & self.STATUS_EDGE_TYPE_MASK)  == 0b0:
             return "rising_edge"
-        if data == 0b1:
+        else:
             return "falling_edge"
 
     def _set_edge_type(self, edge_type):
@@ -235,13 +240,12 @@ class ChipWhispererEdgeCounter(object):
         # Fetch data from CW so we only update pretrigger_ctr
         data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
 
-
         if edge_type == "rising_edge":
-            # clear bit 7 in byte 0
-            data[0] &= ~(1 << 7)
+            # clear bit
+            data[0] &= ~(1 << self.CFG_BIT_EDGE_TYPE)
         if edge_type == "falling_edge":
-            # set bit 7 in byte 0
-            data[0] |= 1 << 7
+            # set bit
+            data[0] |= 1 << self.CFG_BIT_EDGE_TYPE
         
         self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data, Validate=False)
 
