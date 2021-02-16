@@ -1,7 +1,15 @@
 
 #include "ap_int.h"
 
-#define max_window_width 256
+#define max_window_width 128
+
+//Wrap array initialization into function to avoid many initialization cycles
+void init_datamem(ap_uint<10> * datamem){
+	ap_uint<9> i;
+	for(i = 0; i < max_window_width; i++){
+			datamem[i] = 0;
+	}
+}
 
 void mov_sum(ap_uint<8> window_width, ap_uint<1> absolute_value, ap_uint<10> * datain, ap_uint<32> * sumout)
 {
@@ -17,9 +25,7 @@ void mov_sum(ap_uint<8> window_width, ap_uint<1> absolute_value, ap_uint<10> * d
 
 #pragma HLS ARRAY_PARTITION variable=datamem complete dim=1
 
-	for(i = 0; i < max_window_width; i++){
-		datamem[i] = 0;
-	}
+	init_datamem(datamem);
 	totalsum = 0;
 	shift_cnt = 0;
 	
