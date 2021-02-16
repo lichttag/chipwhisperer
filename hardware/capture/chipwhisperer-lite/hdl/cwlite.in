@@ -59,10 +59,10 @@ setup.v = Setup File
 ../../../common/hdl/reconfig/reg_reconfig.v
 ../../../common/hdl/fifo_stream/fifo_top_stream.v
 ../../../common/hdl/edge_trigger/reg_edge.v
-../../../common/hdl/edge_trigger/mov_sum.v
-../../../common/hdl/edge_trigger/mov_sum_mux_1287_10_1_1.v
-#../../../common/hdl/edge_trigger/mov_sum_256.v
-#../../../common/hdl/edge_trigger/mov_sum_mux_2568_10_1_1.v
+#../../../common/hdl/edge_trigger/mov_sum_128.v
+#../../../common/hdl/edge_trigger/mov_sum_mux_1287_10_1_1.v
+../../../common/hdl/edge_trigger/mov_sum_256.v
+../../../common/hdl/edge_trigger/mov_sum_mux_2568_10_1_1.v
 
 [CoreGen Files]
 #Add XCO files. You can just list the filename, OR have the CoreGen files be

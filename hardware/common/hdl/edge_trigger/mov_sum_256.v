@@ -7,7 +7,7 @@
 
 `timescale 1 ns / 1 ps 
 
-(* CORE_GENERATION_INFO="mov_sum,hls_ip_2018_3,{HLS_INPUT_TYPE=cxx,HLS_INPUT_FLOAT=0,HLS_INPUT_FIXED=1,HLS_INPUT_PART=xa7a12tcsg325-1q,HLS_INPUT_CLOCK=10.000000,HLS_INPUT_ARCH=others,HLS_SYN_CLOCK=5.278000,HLS_SYN_LAT=-1,HLS_SYN_TPT=none,HLS_SYN_MEM=0,HLS_SYN_DSP=0,HLS_SYN_FF=2647,HLS_SYN_LUT=6230,HLS_VERSION=2018_3}" *)
+(* CORE_GENERATION_INFO="mov_sum,hls_ip_2018_3,{HLS_INPUT_TYPE=cxx,HLS_INPUT_FLOAT=0,HLS_INPUT_FIXED=1,HLS_INPUT_PART=xa7a12tcsg325-1q,HLS_INPUT_CLOCK=10.000000,HLS_INPUT_ARCH=others,HLS_SYN_CLOCK=5.278000,HLS_SYN_LAT=-1,HLS_SYN_TPT=none,HLS_SYN_MEM=0,HLS_SYN_DSP=0,HLS_SYN_FF=2647,HLS_SYN_LUT=6229,HLS_VERSION=2018_3}" *)
 
 module mov_sum (
         ap_clk,
@@ -6191,7 +6191,7 @@ assign tmp_1_fu_6562_p2 = (($signed(tmp_cast_fu_6558_p1) < $signed(ret_V_fu_6511
 
 assign tmp_3_fu_5229_p1 = t_V_reg_1627[7:0];
 
-assign tmp_4_fu_6544_p2 = (datain_V_dout ^ 10'd512);
+assign tmp_4_fu_6544_p2 = (datain_V_dout ^ 10'd1023);
 
 assign tmp_5_fu_7094_p1 = tmp_V_2_reg_9953_pp0_iter1_reg;
 
