@@ -33,7 +33,7 @@ void mov_sum(ap_uint<8> window_width, ap_uint<1> absolute_value, ap_uint<10> * d
 
 		//Calculate absolute value if configured
 		if(absolute_value && (tmp < 512))
-			datamem[0] = tmp + 512;
+			datamem[0] = 1023 - tmp;
 		else
 			datamem[0] = tmp;
 		
