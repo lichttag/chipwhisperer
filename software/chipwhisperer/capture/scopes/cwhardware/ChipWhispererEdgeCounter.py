@@ -161,17 +161,26 @@ class ChipWhispererEdgeCounter(object):
     def hold_cycles(self, value):
         self._set_hold_cycles(value)
 
-    def reset(self):
+    def reset(self, keep_config=False):
         """ Reset the EdgeCounter hardware block. The ADC clock must be running! """
         
         data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
-        data[0] = 0x01
+
+        if keep_config:
+            data[0] |= 0x01
+        else:
+            data[0] = 0x01
+
         self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data)
         
         if self.check_status():
             raise IOError("EdgeCounter Reset in progress, but EdgeCounter reports still running. Is ADC Clock stopped?")
         
-        data[0] = 0x00
+        if keep_config:
+            data[0] &= ~(0x01)
+        else:
+            data[0] = 0x00
+
         self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data)
 
     def start(self):
