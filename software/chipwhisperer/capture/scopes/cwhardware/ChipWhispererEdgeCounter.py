@@ -42,6 +42,7 @@ ec_cfgaddr[7]: edge_type --> 0 == "rising_edge", 1 == "falling_edge"
 ec_cfgaddr[8:15]: window_size 
 ec_cfgaddr[16:23]: edge_num
 ec_cfgaddr[24:31]: hold_cycles
+ec_cfgaddr[32:39]: decimate
 ec_dataaddr[0:31]: threshold
 """
 ec_cfgaddr  = 60
@@ -103,6 +104,7 @@ class ChipWhispererEdgeCounter(object):
         dict['edge_num'] = self.edge_num
         dict['hold_cycles'] = self.hold_cycles
         dict['absolute_values'] = self.absolute_values
+        dict['decimate'] = self.decimate
         return dict
 
     # Serialization helper
@@ -111,6 +113,14 @@ class ChipWhispererEdgeCounter(object):
 
     def __str__(self):
         return self.__repr__()
+
+    @property
+    def decimate(self):
+        return self._get_decimate()
+
+    @absolute_values.setter
+    def decimate(self, value):
+        self._set_decimate(value)
 
     @property
     def absolute_values(self):
@@ -184,7 +194,7 @@ class ChipWhispererEdgeCounter(object):
         self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data)
 
     def start(self):
-        """ Start the EdgeCounter algorithm, which causes the threshold to be loaded from the FIFO """
+        """ Start the EdgeCounter algorithm """
         
         data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
         data_cpy = data
@@ -258,6 +268,17 @@ class ChipWhispererEdgeCounter(object):
         
         self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data, Validate=False)
 
+    def _get_decimate(self):
+        """ Get the downsampling rate for the EC trigger module in ADC cycles. Only every 'decimate' value is taken, as in 'every 2nd'."""
+        # ec_cfgaddr[32:39]: decimate 
+        return self.__get_config_val(ec_cfgaddr, 4, "c")
+
+    def _set_decimate(self, decimate):
+        """ Set the downsampling rate for the EC trigger module in ADC cycles. Only every 'decimate' value is taken, as in 'every 2nd'."""
+        if (decimate > 255) or (decimate < 1):
+            raise ValueError("Invalid decimate value {}. Must be in range (1, 255)".format(decimate))
+        
+        self.__set_config_val(decimate, 4)
 
     def _get_window_size(self):
         """ Get the moving average/sum width in ADC cycles"""
