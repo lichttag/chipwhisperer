@@ -76,7 +76,7 @@ class ChipWhispererEdgeCounter(object):
     # new_data will be truncated to 8 bit!
     def __set_config_val(self, new_data, idx):
         # Fetch data from CW so we only update pretrigger_ctr
-        data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
+        data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=5)
 
         # Truncate by only using lowest 8 bit
         data[idx] = new_data & 0xff
@@ -84,7 +84,7 @@ class ChipWhispererEdgeCounter(object):
         self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data, Validate=False)
     
     def __get_config_val(self, addr, idx, fstr):
-        data = self.oa.sendMessage(CODE_READ, addr, maxResp=4)
+        data = self.oa.sendMessage(CODE_READ, addr, maxResp=5)
 
         # unpack() expects a buffer of bytes, but accessing elements of a bytearray returns ints.
         # Calling bytes() with an int produces 'int' number of 0x00 bytes.
@@ -298,7 +298,7 @@ class ChipWhispererEdgeCounter(object):
         data = self.oa.sendMessage(CODE_READ, ec_dataaddr, maxResp=4)
         
         thr_raw = struct.unpack('<I', data)[0]
-        thr_unpacked = (thr_raw / (self.window_size * 1023 * self.decimate)) - 0.5
+        thr_unpacked = (thr_raw / (self.window_size * self.decimate * 1023)) - 0.5
         return thr_unpacked
 
 
