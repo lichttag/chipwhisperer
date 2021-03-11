@@ -275,8 +275,8 @@ class ChipWhispererEdgeCounter(object):
 
     def _set_decimate(self, decimate):
         """ Set the downsampling rate for the EC trigger module in ADC cycles. Only every 'decimate' value is taken, as in 'every 2nd'."""
-        if (decimate > 255) or (decimate < 1):
-            raise ValueError("Invalid decimate value {}. Must be in range (1, 255)".format(decimate))
+        if (decimate > 16) or (decimate < 1):
+            raise ValueError("Invalid decimate value {}. Must be in range (1, 16)".format(decimate))
         
         self.__set_config_val(decimate, 4)
 
