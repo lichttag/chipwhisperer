@@ -304,10 +304,12 @@ class ChipWhispererEdgeCounter(object):
 
     def _set_threshold(self, threshold):
         """ Set the threshold. When the trace level surpasses/falls below this threshold for long enough the system triggers (depending on the configured edge_type) """
-        print("[!] Make sure to set window_size before threshold")
+        print("[!] Make sure to set window_size and decimate before threshold")
         
         if self.window_size < 1:
             raise IOError("EdgeCounter window_size must be set before threshold can be set")
+        if self.decimate < 1 or self.decimate > 16:
+            raise IOError("EdgeCounter decimate must be set to a valid value [0, 16] before threshold can be set")
         
         threshold_s = int(((threshold + 0.5) * 1023) * self.window_size * self.decimate)
         threshold_packed = struct.pack("<I", threshold_s)
