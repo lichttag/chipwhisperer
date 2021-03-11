@@ -118,7 +118,7 @@ class ChipWhispererEdgeCounter(object):
     def decimate(self):
         return self._get_decimate()
 
-    @absolute_values.setter
+    @decimate.setter
     def decimate(self, value):
         self._set_decimate(value)
 
@@ -298,7 +298,7 @@ class ChipWhispererEdgeCounter(object):
         data = self.oa.sendMessage(CODE_READ, ec_dataaddr, maxResp=4)
         
         thr_raw = struct.unpack('<I', data)[0]
-        thr_unpacked = (thr_raw / (self.window_size * 1023)) - 0.5
+        thr_unpacked = (thr_raw / (self.window_size * 1023 * self.decimate)) - 0.5
         return thr_unpacked
 
 
@@ -309,7 +309,7 @@ class ChipWhispererEdgeCounter(object):
         if self.window_size < 1:
             raise IOError("EdgeCounter window_size must be set before threshold can be set")
         
-        threshold_s = int(((threshold + 0.5) * 1023) * self.window_size)
+        threshold_s = int(((threshold + 0.5) * 1023) * self.window_size * self.decimate)
         threshold_packed = struct.pack("<I", threshold_s)
         
         self.oa.sendMessage(CODE_WRITE, ec_dataaddr, threshold_packed, Validate=False)
