@@ -45,7 +45,7 @@ module reg_edge(
 	 assign reg_stream = 1'b0;
  	  
 	`define EDGE_STATUSCFG_ADDR 60
-	`define EDGE_STATUSCFG_LEN 4
+	`define EDGE_STATUSCFG_LEN 5
 	`define EDGE_THRESHOLD_ADDR 61
 	`define EDGE_THRESHOLD_LEN 4
 	
@@ -66,8 +66,8 @@ module reg_edge(
 	 reg [7:0] reg_datao_reg;
 	 assign reg_datao = reg_datao_reg;
 	 
-	 reg [31:0] statuscfg_reg;
-	 wire [31:0] statuscfg_reg_read;
+	 reg [39:0] statuscfg_reg;
+	 wire [39:0] statuscfg_reg_read;
 	 
 	 reg [31:0] threshold_reg;
 	 
@@ -78,7 +78,7 @@ module reg_edge(
 	 
 	 assign statuscfg_reg_read[2:0] = statuscfg_reg[2:0];
 	 assign statuscfg_reg_read[3] = sum_val;
-	 assign statuscfg_reg_read[31:4] = statuscfg_reg[31:4];
+	 assign statuscfg_reg_read[39:4] = statuscfg_reg[39:4];
 	  	 
 	 always @(posedge clk) begin
 		if (reg_read) begin
@@ -117,19 +117,48 @@ module reg_edge(
 	assign edge_num = statuscfg_reg[23:16];
 	wire [7:0] hold_cycles_num;
 	assign hold_cycles_num = statuscfg_reg[31:24];
+	wire [7:0] downsample_num;
+	assign downsample_num = statuscfg_reg[39:32];
+	
+	wire [13:0] sumout_V_downsample;
+	wire sumout_V_ap_vld_downsample;
+	downsample downsample_inst (
+		.ap_clk(ADC_clk), 
+		.ap_rst(rst_core|reset), 
+		.ap_start(start_core), 
+		.ap_done(), 
+		.ap_idle(), 
+		.ap_ready(), 
+		.absolute_value_V(absolute_value), 
+		.downsample_num_V(downsample_num), 
+		.datain_V_dout(ADC_data), //9:0
+		.datain_V_empty_n(1'b1), 
+		.datain_V_read(), 
+		.sumout_V(sumout_V_downsample), 
+		.sumout_V_ap_vld(sumout_V_ap_vld_downsample)
+	);
+
+`define EC_DOWNSAMPLE
+wire mov_sum_clk;
+wire mov_sum_start;
+`ifdef EC_DOWNSAMPLE
+	assign mov_sum_clk = sumout_V_ap_vld_downsample | (rst_core|reset);
+	assign mov_sum_start = sumout_V_ap_vld_downsample;
+`else
+	assign mov_sum_clk = ADC_clk;
+	assign mov_sum_start = start_core;
+`endif
 
 	mov_sum mov_sum_inst (
-	.ap_clk(ADC_clk),
-	.ap_rst(rst_core|reset),
-	.ap_start(start_core),
+	.ap_clk(mov_sum_clk), 
+	.ap_rst(rst_core|reset), 
+	.ap_start(mov_sum_start), 
 	.ap_done(),
 	.ap_idle(),
 	.ap_ready(),
 	.window_width_V(window_size), //7:0
-	.absolute_value_V(absolute_value),
-	.datain_V_dout(ADC_data), //9:0
-	.datain_V_empty_n(1'b1),
-	.datain_V_read(),
+	.datain_V(sumout_V_downsample), 
+	//.datain_V_ap_vld(sumout_V_ap_vld_downsample), 
 	.sumout_V(sum_out), //31:0
 	.sumout_V_ap_vld(sum_val)
 	);
@@ -137,6 +166,8 @@ module reg_edge(
 	reg [7:0] edge_ctr = 0;
 	reg [7:0] hold_cycles_ctr = 0;
 	reg is_high = 0;
+
+	reg [7:0] downsample_cnt = 0;
 
 	always @(posedge ADC_clk) begin
 		//Default assignment
@@ -146,8 +177,16 @@ module reg_edge(
 			edge_ctr <= 0;
 			hold_cycles_ctr <= 0;
 			is_high <= 0;
+			downsample_cnt <= 0;
 		end else begin
-			if (sum_val) begin
+			if(sum_val) begin
+				if (downsample_cnt == (downsample_num-1)) begin
+					downsample_cnt <= 0;
+				end else begin
+					downsample_cnt <= downsample_cnt + 1;
+				end
+			end
+			if ((downsample_cnt == 0) && sum_val) begin
 				if (sum_out > threshold_reg) begin
 					if (edge_type == `EDGE_TYPE_RISING) begin
 						if ((!is_high) || (hold_cycles_ctr > 0)) begin

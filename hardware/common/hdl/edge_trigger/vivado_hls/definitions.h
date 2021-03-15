@@ -1,0 +1,2 @@
+#define ADC_SUM_BITS 14
+#define MAX_WINDOW_WIDTH 256
