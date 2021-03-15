@@ -32,6 +32,7 @@ import copy
 import numpy as np
 from collections import OrderedDict
 from chipwhisperer.common.utils import util
+import warnings
 
 """
 ec_cfgaddr[0]: reset
@@ -46,7 +47,9 @@ ec_cfgaddr[32:39]: decimate
 ec_dataaddr[0:31]: threshold
 """
 ec_cfgaddr  = 60
+ec_cfglen = 5
 ec_dataaddr = 61
+ec_datalen = 4
 CODE_READ   = 0x80
 CODE_WRITE  = 0xC0
 
@@ -174,7 +177,7 @@ class ChipWhispererEdgeCounter(object):
     def reset(self, keep_config=False):
         """ Reset the EdgeCounter hardware block. The ADC clock must be running! """
         
-        data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
+        data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=ec_cfglen)
 
         if keep_config:
             data[0] |= 0x01
@@ -184,7 +187,8 @@ class ChipWhispererEdgeCounter(object):
         self.oa.sendMessage(CODE_WRITE, ec_cfgaddr, data)
         
         if self.check_status():
-            raise IOError("EdgeCounter Reset in progress, but EdgeCounter reports still running. Is ADC Clock stopped?")
+            warnings.warn("EdgeCounter Reset in progress, but EdgeCounter reports still running. Is ADC Clock stopped?")
+            #raise IOError("EdgeCounter Reset in progress, but EdgeCounter reports still running. Is ADC Clock stopped?")
         
         if keep_config:
             data[0] &= ~(0x01)
@@ -196,7 +200,7 @@ class ChipWhispererEdgeCounter(object):
     def start(self):
         """ Start the EdgeCounter algorithm """
         
-        data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
+        data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=ec_cfglen)
         data_cpy = data
         
         # Set enable
@@ -207,7 +211,7 @@ class ChipWhispererEdgeCounter(object):
 
     def check_status(self):
         """ Check if the EdgeCounter module is running & outputting valid data """
-        data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
+        data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=ec_cfglen)
         if not (data[0] & self.STATUS_RUNNING_MASK):
             return False
         else:
@@ -216,7 +220,7 @@ class ChipWhispererEdgeCounter(object):
     def _get_absolute_values(self):
         """ Get if the absolute value of the signal should be calculated before averaging/summing"""
         # ec_cfgaddr[6]: absolute_values --> calculate absolute value before summing up
-        data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
+        data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=ec_cfglen)
         
         if data[0] & self.STATUS_ABSOLUTE_VALUES_MASK == 0b0:
             return False
@@ -229,7 +233,7 @@ class ChipWhispererEdgeCounter(object):
             raise ValueError(f"Value for absolute_values {edge_type} is not a boolean")
         
         # Fetch data from CW so we only update pretrigger_ctr
-        data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
+        data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=ec_cfglen)
         
         if absolute_values:
             # set bit
@@ -244,7 +248,7 @@ class ChipWhispererEdgeCounter(object):
     def _get_edge_type(self):
         """ Get the edge type"""
         # ec_cfgaddr[7]: edge_type --> 0 == "rising_edge", 1 == "falling_edge"
-        data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
+        data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=ec_cfglen)
         
         if (data[0] & self.STATUS_EDGE_TYPE_MASK)  == 0b0:
             return "rising_edge"
@@ -257,7 +261,7 @@ class ChipWhispererEdgeCounter(object):
             raise ValueError(f"Invalid edge_type {edge_type}. Must be 'rising_edge' or 'falling_edge'")
     
         # Fetch data from CW so we only update pretrigger_ctr
-        data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=4)
+        data = self.oa.sendMessage(CODE_READ, ec_cfgaddr, maxResp=ec_cfglen)
 
         if edge_type == "rising_edge":
             # clear bit
@@ -295,7 +299,7 @@ class ChipWhispererEdgeCounter(object):
 
     def _get_threshold(self):
         """ Get the threshold. When the trace level surpasses/falls below this threshold for long enough the system triggers (depending on the configured edge_type) """
-        data = self.oa.sendMessage(CODE_READ, ec_dataaddr, maxResp=4)
+        data = self.oa.sendMessage(CODE_READ, ec_dataaddr, maxResp=ec_datalen)
         
         thr_raw = struct.unpack('<I', data)[0]
         thr_unpacked = (thr_raw / (self.window_size * self.decimate * 1023)) - 0.5
